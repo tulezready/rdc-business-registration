@@ -1,0 +1,842 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Ready Digital Consultancy — Business Name Registration</title>
+<link rel="manifest" href="manifest.json">
+<meta name="theme-color" content="#14514B">
+<link rel="icon" href="icon-192.png" type="image/png">
+<link rel="apple-touch-icon" href="icon-192.png">
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<style>
+  :root{
+    --bg:#F6F5F1;
+    --surface:#FFFFFF;
+    --ink:#1C2624;
+    --muted:#6B6459;
+    --border:#E2DFD6;
+    --primary:#14514B;
+    --primary-dark:#0D3835;
+    --accent:#D98E2B;
+    --accent-dark:#B8721E;
+    --danger:#B3261E;
+    --radius:10px;
+  }
+  *{box-sizing:border-box;}
+  body{
+    margin:0;
+    background:var(--bg);
+    color:var(--ink);
+    font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"Helvetica Neue",Arial,sans-serif;
+    line-height:1.45;
+  }
+  .shell{max-width:560px;margin:0 auto;padding:28px 18px 80px;}
+  .admin-shell{max-width:720px;}
+  .brand{margin-bottom:20px;}
+  .brand-name{font-size:19px;font-weight:700;color:var(--primary-dark);}
+  .brand-sub{font-size:14px;color:var(--muted);margin-top:2px;}
+  .progress-track{height:6px;background:var(--border);border-radius:4px;overflow:hidden;margin-bottom:8px;}
+  .progress-fill{height:100%;background:var(--primary);transition:width .25s ease;}
+  .progress-label{font-size:13px;color:var(--muted);margin-bottom:20px;}
+  .step-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:22px 18px;}
+  .step-intro{margin-top:0;font-size:14px;color:var(--muted);}
+  .section-label{font-size:13px;font-weight:700;color:var(--muted);margin:22px 0 10px;padding-top:16px;border-top:1px solid var(--border);}
+  .field{margin-bottom:16px;}
+  .field label{display:block;font-size:14px;font-weight:600;margin-bottom:6px;}
+  .req{color:var(--danger);font-weight:400;}
+  .hint{font-size:12px;color:var(--muted);margin-top:4px;}
+  input[type=text],input[type=email],input[type=tel],input[type=date],input[type=month],input[type=password],select,textarea{
+    width:100%;padding:11px 12px;border:1px solid var(--border);border-radius:8px;
+    font-size:16px;background:#fff;color:var(--ink);font-family:inherit;
+  }
+  input:focus,select:focus,textarea:focus{outline:2px solid var(--primary);outline-offset:1px;border-color:var(--primary);}
+  textarea{resize:vertical;}
+  .btn{display:inline-flex;align-items:center;justify-content:center;padding:12px 20px;border-radius:8px;
+    font-size:15px;font-weight:600;border:none;cursor:pointer;font-family:inherit;}
+  .btn-primary{background:var(--accent);color:#fff;}
+  .btn-primary:hover{background:var(--accent-dark);}
+  .btn-secondary{background:transparent;color:var(--primary);border:1px solid var(--border);}
+  .btn-block{width:100%;}
+  .btn:disabled{opacity:.55;cursor:not-allowed;}
+  .btn-danger-text{background:none;border:none;color:var(--danger);font-size:13px;cursor:pointer;padding:4px 0;font-family:inherit;}
+  .edit-link{font-size:13px;color:var(--primary);background:none;border:none;cursor:pointer;text-decoration:underline;padding:0;font-family:inherit;}
+  .nav-row{display:flex;justify-content:space-between;gap:12px;margin-top:22px;}
+  .option-list{display:flex;flex-direction:column;gap:10px;}
+  .option-card{display:block;border:1px solid var(--border);border-radius:8px;padding:14px;cursor:pointer;background:#fff;font-weight:600;font-size:14px;}
+  .option-card:has(input:checked){border-color:var(--primary);background:#EFF5F4;}
+  .option-card input{margin-right:8px;}
+  .owner-card{border:1px solid var(--border);border-radius:8px;padding:14px;margin-bottom:10px;
+    display:flex;justify-content:space-between;align-items:flex-start;gap:10px;}
+  .owner-card .meta{font-size:13px;color:var(--muted);margin-top:2px;}
+  .review-section{margin-bottom:18px;}
+  .review-section h3{font-size:14px;font-weight:700;color:var(--muted);margin:0 0 8px;display:flex;justify-content:space-between;align-items:center;}
+  .review-row{display:flex;justify-content:space-between;gap:12px;padding:6px 0;border-bottom:1px solid var(--border);font-size:14px;}
+  .review-row:last-child{border-bottom:none;}
+  .field-error{background:#FBEAEA;border:1px solid var(--danger);color:var(--danger);padding:10px 12px;border-radius:8px;font-size:14px;margin-bottom:16px;}
+  .admin-link{display:block;text-align:center;margin-top:28px;font-size:12px;color:var(--muted);}
+  .admin-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:18px;}
+  .filter-tabs{display:flex;gap:8px;margin-bottom:16px;flex-wrap:wrap;}
+  .filter-tab{padding:6px 14px;border-radius:999px;border:1px solid var(--border);background:#fff;font-size:13px;cursor:pointer;font-family:inherit;}
+  .filter-tab.active{background:var(--primary);color:#fff;border-color:var(--primary);}
+  .submission-card{background:#fff;border:1px solid var(--border);border-radius:10px;padding:16px;margin-bottom:12px;}
+  .submission-top{display:flex;justify-content:space-between;align-items:flex-start;cursor:pointer;gap:12px;}
+  .submission-detail{margin-top:16px;padding-top:16px;border-top:1px solid var(--border);}
+  .badge{display:inline-block;padding:3px 10px;border-radius:999px;font-size:12px;font-weight:700;white-space:nowrap;}
+  .badge-teal{background:#E4F0EE;color:var(--primary-dark);}
+  .badge-amber{background:#FCEFDA;color:var(--accent-dark);}
+  .badge-blue{background:#E3EBFB;color:#2B4C9B;}
+  .badge-green{background:#E4F5E4;color:#2E7D32;}
+  @media print{
+    body *{visibility:hidden;}
+    #receipt,#receipt *{visibility:visible;}
+    #receipt{position:absolute;left:0;top:0;width:100%;}
+  }
+</style>
+</head>
+<body>
+
+<datalist id="provinceList">
+  <option value="Bougainville (Autonomous Region)">
+  <option value="Central">
+  <option value="Chimbu (Simbu)">
+  <option value="East New Britain">
+  <option value="East Sepik">
+  <option value="Eastern Highlands">
+  <option value="Enga">
+  <option value="Gulf">
+  <option value="Hela">
+  <option value="Jiwaka">
+  <option value="Madang">
+  <option value="Manus">
+  <option value="Milne Bay">
+  <option value="Morobe">
+  <option value="National Capital District">
+  <option value="New Ireland">
+  <option value="Northern (Oro)">
+  <option value="Southern Highlands">
+  <option value="West New Britain">
+  <option value="West Sepik (Sandaun)">
+  <option value="Western (Fly)">
+  <option value="Western Highlands">
+</datalist>
+
+<div id="wizardApp"></div>
+<div id="adminApp" style="display:none"></div>
+
+<script>
+/* =========================================================
+   CONFIG — this project's Supabase details.
+   The key below is the public "anon" key. It is meant to be
+   visible in client-side code — the database rules (RLS) are
+   what actually keep client data safe, not secrecy of this key.
+   ========================================================= */
+const SUPABASE_URL = "https://xupiayjdexyzndpgvrco.supabase.co";
+const SUPABASE_KEY = "sb_publishable_12_pAK-a0REtI-Cg4FkB3A_TEIQA3cp";
+const { createClient } = supabase;
+const sb = createClient(SUPABASE_URL, SUPABASE_KEY);
+
+/* =========================================================
+   SHARED HELPERS
+   ========================================================= */
+function escapeHtml(str){
+  return String(str==null ? '' : str)
+    .replace(/&/g,'&amp;')
+    .replace(/</g,'&lt;')
+    .replace(/>/g,'&gt;')
+    .replace(/"/g,'&quot;')
+    .replace(/'/g,'&#39;');
+}
+function uid(){
+  if(window.crypto && crypto.randomUUID) return crypto.randomUUID();
+  return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function(c){
+    const r = Math.random()*16|0, v = c==='x' ? r : (r&0x3|0x8);
+    return v.toString(16);
+  });
+}
+function setPath(obj, path, value){
+  const parts = path.split('.');
+  let cur = obj;
+  for(let i=0;i<parts.length-1;i++){ cur = cur[parts[i]]; }
+  cur[parts[parts.length-1]] = value;
+}
+function ownerTypeLabel(t){
+  if(t==='natural_person') return 'Individual';
+  if(t==='registered_entity') return 'PNG-registered entity';
+  return 'Other entity';
+}
+function statusLabel(v){
+  return { new:'New', reviewed:'Reviewed', lodged:'Lodged', certificate_issued:'Certificate issued' }[v] || v;
+}
+function badgeClass(v){
+  return { new:'badge-teal', reviewed:'badge-amber', lodged:'badge-blue', certificate_issued:'badge-green' }[v] || 'badge-teal';
+}
+function formatAddress(a){
+  if(!a) return '—';
+  return [a.line1,a.line2,a.box,a.postOffice,a.city,a.district,a.province,a.postcode].filter(Boolean).join(', ');
+}
+function formatDate(iso){
+  try{ return new Date(iso).toLocaleDateString(); }catch(e){ return iso; }
+}
+function inp(label, field, value, opts){
+  opts = opts || {};
+  const type = opts.type || 'text';
+  const required = opts.required ? '<span class="req">*</span>' : '';
+  const hint = opts.hint ? '<div class="hint">'+escapeHtml(opts.hint)+'</div>' : '';
+  return '<div class="field"><label>'+escapeHtml(label)+' '+required+'</label>'+
+    '<input type="'+type+'" data-field="'+field+'" value="'+escapeHtml(value)+'"></div>'+hint;
+}
+function inpList(label, field, value, listId, opts){
+  opts = opts || {};
+  const required = opts.required ? '<span class="req">*</span>' : '';
+  const hint = opts.hint ? '<div class="hint">'+escapeHtml(opts.hint)+'</div>' : '';
+  return '<div class="field"><label>'+escapeHtml(label)+' '+required+'</label>'+
+    '<input type="text" data-field="'+field+'" value="'+escapeHtml(value)+'" list="'+listId+'"></div>'+hint;
+}
+function ofInp(label, field, value, opts){
+  opts = opts || {};
+  const type = opts.type || 'text';
+  const required = opts.required ? '<span class="req">*</span>' : '';
+  const hint = opts.hint ? '<div class="hint">'+escapeHtml(opts.hint)+'</div>' : '';
+  return '<div class="field"><label>'+escapeHtml(label)+' '+required+'</label>'+
+    '<input type="'+type+'" data-of="'+field+'" value="'+escapeHtml(value)+'"></div>'+hint;
+}
+function ofInpList(label, field, value, listId){
+  return '<div class="field"><label>'+escapeHtml(label)+'</label>'+
+    '<input type="text" data-of="'+field+'" value="'+escapeHtml(value)+'" list="'+listId+'"></div>';
+}
+
+const BUSINESS_ACTIVITIES = [
+  "Agriculture, hunting, forestry",
+  "Fishing",
+  "Mining and quarrying",
+  "Manufacturing",
+  "Electricity, gas and water supply",
+  "Construction",
+  "Wholesale and retail trade, sale and repair of motor vehicles, motor cycles, personal and household goods",
+  "Hotels and restaurants",
+  "Transport, storage and communications",
+  "Financial intermediation",
+  "Real estate, renting and business service activities",
+  "Public administration and defence, compulsory social security",
+  "Education",
+  "Health and social work",
+  "Other community, social and personal service activities",
+  "Private households with employed persons",
+  "Extra-territorial organization and bodies"
+];
+
+/* =========================================================
+   CLIENT WIZARD
+   ========================================================= */
+const STEP_TITLES = [
+  'Your details','Business name','Business address','Postal address',
+  'Owners','Business activity','Start date','Review & submit'
+];
+
+function emptyDraft(){
+  return {
+    client:{ name:'', phone:'', email:'' },
+    names:{ first:'', second:'', third:'' },
+    principal:{ line1:'', line2:'', city:'', district:'', province:'', postcode:'' },
+    postal:{ box:'', postOffice:'', city:'', district:'', province:'', postcode:'' },
+    contactEmail:'',
+    owners:[],
+    activity:'',
+    commencementDate:''
+  };
+}
+const DRAFT_KEY = 'rdc_a17_draft_v1';
+function loadDraft(){
+  try{
+    const raw = localStorage.getItem(DRAFT_KEY);
+    if(raw) return JSON.parse(raw);
+  }catch(e){}
+  return emptyDraft();
+}
+function saveDraft(){
+  try{ localStorage.setItem(DRAFT_KEY, JSON.stringify(draft)); }catch(e){}
+}
+function clearDraft(){
+  try{ localStorage.removeItem(DRAFT_KEY); }catch(e){}
+}
+
+let draft = loadDraft();
+let step = 0;
+let wizardError = null;
+let ownerEditor = null;   // null, or {index, type, data}
+let submitting = false;
+let submitted = null;
+
+function initWizard(){
+  const app = document.getElementById('wizardApp');
+  app.addEventListener('click', onWizardClick);
+  app.addEventListener('input', onWizardInput);
+  app.addEventListener('change', onWizardInput);
+  renderWizard();
+}
+
+function onWizardInput(e){
+  const t = e.target;
+  if(t.dataset.field !== undefined){
+    setPath(draft, t.dataset.field, t.value);
+    saveDraft();
+  } else if(t.dataset.of !== undefined){
+    if(!ownerEditor) return;
+    ownerEditor.data[t.dataset.of] = t.value;
+  }
+}
+
+function onWizardClick(e){
+  const el = e.target.closest('[data-action]');
+  if(!el) return;
+  const action = el.dataset.action;
+
+  if(action==='next'){
+    const err = validateStep(step);
+    if(err){ wizardError = err; renderWizard(); return; }
+    wizardError = null; step++; renderWizard();
+  }
+  else if(action==='back'){ wizardError = null; step--; renderWizard(); }
+  else if(action==='goto'){ wizardError = null; step = parseInt(el.dataset.step,10); renderWizard(); }
+  else if(action==='add-owner'){ ownerEditor = { index:-1, type:'', data:{} }; renderWizard(); }
+  else if(action==='edit-owner'){
+    const idx = parseInt(el.dataset.index,10);
+    const o = draft.owners[idx];
+    ownerEditor = { index: idx, type: o.owner_type, data: flattenOwner(o) };
+    renderWizard();
+  }
+  else if(action==='remove-owner'){
+    const idx = parseInt(el.dataset.index,10);
+    if(confirm('Remove this owner?')){
+      draft.owners.splice(idx,1);
+      draft.owners.forEach(function(o,i){ o.owner_order = i+1; });
+      saveDraft(); renderWizard();
+    }
+  }
+  else if(action==='owner-pick-type'){
+    ownerEditor.type = el.dataset.type;
+    ownerEditor.data = defaultOwnerData(el.dataset.type);
+    renderWizard();
+  }
+  else if(action==='owner-save'){
+    const built = buildOwnerFromEditor();
+    if(!built.display_name){ alert('Please enter a name.'); return; }
+    if(ownerEditor.index>=0){
+      const existing = draft.owners[ownerEditor.index];
+      built.id = existing.id; built.owner_order = existing.owner_order;
+      draft.owners[ownerEditor.index] = built;
+    } else {
+      built.id = uid(); built.owner_order = draft.owners.length+1;
+      draft.owners.push(built);
+    }
+    ownerEditor = null; saveDraft(); renderWizard();
+  }
+  else if(action==='owner-cancel'){ ownerEditor = null; renderWizard(); }
+  else if(action==='submit'){ onSubmit(); }
+  else if(action==='print'){ window.print(); }
+  else if(action==='restart'){ submitted = null; renderWizard(); }
+}
+
+function validateStep(n){
+  if(n===0 && !draft.client.name.trim()) return 'Please enter your name.';
+  if(n===1 && !draft.names.first.trim()) return 'Please enter at least a preferred business name.';
+  if(n===2){
+    if(!draft.principal.line1.trim()) return 'Street address / allotment number is required.';
+    if(!draft.principal.district.trim()) return 'District is required.';
+    if(!draft.principal.province.trim()) return 'Province is required.';
+  }
+  if(n===3){
+    if(!draft.postal.box.trim()) return 'PO Box or Private Mail Bag is required.';
+    if(!draft.postal.district.trim()) return 'District is required.';
+    if(!draft.postal.province.trim()) return 'Province is required.';
+    if(!draft.contactEmail.trim()) return 'An email address is required to lodge online.';
+  }
+  if(n===4 && draft.owners.length===0) return 'Add at least one owner before continuing.';
+  if(n===5 && !draft.activity) return 'Please select the business activity.';
+  if(n===6 && !draft.commencementDate) return 'Please choose a commencement date.';
+  return null;
+}
+
+function defaultOwnerData(type){
+  const base = { pa_line1:'', pa_postOffice:'', pa_city:'', pa_district:'', pa_province:'', pa_country:'Papua New Guinea', pa_postcode:'' };
+  if(type==='natural_person') return Object.assign({
+    full_legal_name:'', nationality:'', otherNationalities:'', gender:'', dob:'', email:'', foreignCertNumber:'',
+    res_line1:'', res_line2:'', res_city:'', res_district:'', res_province:'', res_country:'Papua New Guinea', res_postcode:''
+  }, base);
+  if(type==='registered_entity') return Object.assign({
+    entity_name:'', registrationNumber:'', entityType:'', email:''
+  }, base);
+  return Object.assign({
+    full_legal_name:'', entityType:'', email:'', contactPerson:'', foreignCertNumber:'', entityNumber:''
+  }, base);
+}
+
+function buildOwnerFromEditor(){
+  const t = ownerEditor.type, d = ownerEditor.data;
+  const postal_address = {
+    line1: d.pa_line1||'', postOffice: d.pa_postOffice||'', city: d.pa_city||'',
+    district: d.pa_district||'', province: d.pa_province||'', country: d.pa_country||'', postcode: d.pa_postcode||''
+  };
+  let display_name='', email='', details={};
+  if(t==='natural_person'){
+    display_name = d.full_legal_name||''; email = d.email||'';
+    details = {
+      nationality:d.nationality||'', otherNationalities:d.otherNationalities||'', gender:d.gender||'',
+      dob:d.dob||'', foreignCertNumber:d.foreignCertNumber||'',
+      residential:{ line1:d.res_line1||'', line2:d.res_line2||'', city:d.res_city||'', district:d.res_district||'',
+        province:d.res_province||'', country:d.res_country||'', postcode:d.res_postcode||'' }
+    };
+  } else if(t==='registered_entity'){
+    display_name = d.entity_name||''; email = d.email||'';
+    details = { registrationNumber:d.registrationNumber||'', entityType:d.entityType||'' };
+  } else {
+    display_name = d.full_legal_name||''; email = d.email||'';
+    details = { entityType:d.entityType||'', contactPerson:d.contactPerson||'', foreignCertNumber:d.foreignCertNumber||'', entityNumber:d.entityNumber||'' };
+  }
+  return { owner_type:t, display_name:display_name, email:email, postal_address:postal_address, details:details };
+}
+
+function flattenOwner(o){
+  const d = {};
+  if(o.owner_type==='natural_person'){
+    d.full_legal_name=o.display_name; d.email=o.email;
+    d.nationality=o.details.nationality; d.otherNationalities=o.details.otherNationalities;
+    d.gender=o.details.gender; d.dob=o.details.dob; d.foreignCertNumber=o.details.foreignCertNumber;
+    const r=o.details.residential||{};
+    d.res_line1=r.line1; d.res_line2=r.line2; d.res_city=r.city; d.res_district=r.district;
+    d.res_province=r.province; d.res_country=r.country; d.res_postcode=r.postcode;
+  } else if(o.owner_type==='registered_entity'){
+    d.entity_name=o.display_name; d.email=o.email;
+    d.registrationNumber=o.details.registrationNumber; d.entityType=o.details.entityType;
+  } else {
+    d.full_legal_name=o.display_name; d.email=o.email;
+    d.entityType=o.details.entityType; d.contactPerson=o.details.contactPerson;
+    d.foreignCertNumber=o.details.foreignCertNumber; d.entityNumber=o.details.entityNumber;
+  }
+  const p=o.postal_address||{};
+  d.pa_line1=p.line1; d.pa_postOffice=p.postOffice; d.pa_city=p.city; d.pa_district=p.district;
+  d.pa_province=p.province; d.pa_country=p.country; d.pa_postcode=p.postcode;
+  return d;
+}
+
+function renderWizard(){
+  const app = document.getElementById('wizardApp');
+  if(submitted){ app.innerHTML = renderConfirmation(); return; }
+
+  let body = '';
+  if(step===0) body = renderStepClient();
+  else if(step===1) body = renderStepNames();
+  else if(step===2) body = renderStepPrincipal();
+  else if(step===3) body = renderStepPostal();
+  else if(step===4) body = renderStepOwners();
+  else if(step===5) body = renderStepActivity();
+  else if(step===6) body = renderStepCommencement();
+  else body = renderStepReview();
+
+  const pct = Math.round((step/(STEP_TITLES.length-1))*100);
+  const errorHtml = wizardError ? '<div class="field-error">'+escapeHtml(wizardError)+'</div>' : '';
+  const isOwnerEditing = (step===4 && ownerEditor);
+  const showBack = step>0 && !isOwnerEditing;
+  const showNext = step < STEP_TITLES.length-1 && !isOwnerEditing;
+
+  app.innerHTML =
+    '<div class="shell">' +
+      '<div class="brand"><div class="brand-name">Ready Digital Consultancy</div>' +
+      '<div class="brand-sub">Business name registration — Form A-17 intake</div></div>' +
+      '<div class="progress-track"><div class="progress-fill" style="width:'+pct+'%"></div></div>' +
+      '<div class="progress-label">Step '+(step+1)+' of '+STEP_TITLES.length+' — '+escapeHtml(STEP_TITLES[step])+'</div>' +
+      '<div class="step-card">'+errorHtml+body+'</div>' +
+      (isOwnerEditing ? '' :
+        '<div class="nav-row">' +
+          '<button class="btn btn-secondary" data-action="back" style="visibility:'+(showBack?'visible':'hidden')+'">Back</button>' +
+          (showNext ? '<button class="btn btn-primary" data-action="next">Next</button>' : '<span></span>') +
+        '</div>'
+      ) +
+      '<a class="admin-link" href="#admin">Staff login</a>' +
+    '</div>';
+}
+
+function renderStepClient(){
+  const c = draft.client;
+  return '<p class="step-intro">Let\'s start with how we can reach you about this application.</p>' +
+    inp('Your full name','client.name', c.name, {required:true}) +
+    inp('Phone number','client.phone', c.phone, {type:'tel'}) +
+    inp('Email address','client.email', c.email, {type:'email', hint:'Optional, but useful if we need to reach you by email too.'});
+}
+function renderStepNames(){
+  const n = draft.names;
+  return '<p class="step-intro">Give us up to three business names, in order of preference. If your first choice is taken, we\'ll try the next one.</p>' +
+    inp('Preferred name','names.first', n.first, {required:true}) +
+    inp('Second choice','names.second', n.second, {hint:'Optional'}) +
+    inp('Third choice','names.third', n.third, {hint:'Optional'});
+}
+function renderStepPrincipal(){
+  const a = draft.principal;
+  return '<p class="step-intro">Where does the business actually operate from? A PO Box or a village address alone can\'t be used here.</p>' +
+    inp('Street address / allotment & section number','principal.line1', a.line1, {required:true}) +
+    inp('Address line 2','principal.line2', a.line2, {hint:'Optional — apartment, suite, etc.'}) +
+    inp('City / town','principal.city', a.city) +
+    inp('District','principal.district', a.district, {required:true}) +
+    inpList('Province','principal.province', a.province, 'provinceList', {required:true}) +
+    inp('Postcode','principal.postcode', a.postcode, {hint:'Optional'});
+}
+function renderStepPostal(){
+  const a = draft.postal;
+  return '<p class="step-intro">Where should letters from the Registrar be sent?</p>' +
+    inp('PO Box or Private Mail Bag','postal.box', a.box, {required:true}) +
+    inp('Post office location','postal.postOffice', a.postOffice, {hint:'Optional'}) +
+    inp('City / town','postal.city', a.city) +
+    inp('District','postal.district', a.district, {required:true}) +
+    inpList('Province','postal.province', a.province, 'provinceList', {required:true}) +
+    inp('Postcode','postal.postcode', a.postcode, {hint:'Optional'}) +
+    inp('Contact email','contactEmail', draft.contactEmail, {type:'email', required:true, hint:'Required — this is how the Registrar and RDC will reach you.'});
+}
+function renderStepOwners(){
+  if(ownerEditor) return renderOwnerEditor();
+  const cards = draft.owners.map(function(o,i){
+    return '<div class="owner-card"><div><div><strong>'+escapeHtml(o.display_name||'(unnamed)')+'</strong></div>' +
+      '<div class="meta">'+ownerTypeLabel(o.owner_type)+(o.email?' · '+escapeHtml(o.email):'')+'</div></div>' +
+      '<div style="display:flex;gap:10px;flex-shrink:0;">' +
+      '<button class="edit-link" data-action="edit-owner" data-index="'+i+'">Edit</button>' +
+      '<button class="btn-danger-text" data-action="remove-owner" data-index="'+i+'">Remove</button></div></div>';
+  }).join('');
+  return '<p class="step-intro">Add everyone with an ownership stake in the business — up to 4 owners.</p>' +
+    (cards || '<p class="hint">No owners added yet.</p>') +
+    (draft.owners.length<4 ? '<button class="btn btn-secondary btn-block" data-action="add-owner">+ Add owner</button>' : '<p class="hint">Maximum of 4 owners reached.</p>');
+}
+function renderOwnerEditor(){
+  if(!ownerEditor.type){
+    return '<p class="step-intro">What kind of owner is this?</p><div class="option-list">' +
+      '<label class="option-card" data-action="owner-pick-type" data-type="natural_person">Individual<div class="hint" style="font-weight:400;">A named person with an ownership stake.</div></label>' +
+      '<label class="option-card" data-action="owner-pick-type" data-type="registered_entity">PNG-registered company or entity<div class="hint" style="font-weight:400;">Already registered with IPA — has a registration number.</div></label>' +
+      '<label class="option-card" data-action="owner-pick-type" data-type="unregistered_entity">Other entity<div class="hint" style="font-weight:400;">Not registered in a PNG government registry.</div></label>' +
+      '</div><div class="nav-row"><button class="btn btn-secondary" data-action="owner-cancel">Cancel</button><span></span></div>';
+  }
+  let fields = '';
+  if(ownerEditor.type==='natural_person') fields = fieldsNaturalPerson(ownerEditor.data);
+  else if(ownerEditor.type==='registered_entity') fields = fieldsRegisteredEntity(ownerEditor.data);
+  else fields = fieldsUnregisteredEntity(ownerEditor.data);
+  return '<p class="step-intro">'+ownerTypeLabel(ownerEditor.type)+'</p>' + fields +
+    '<div class="nav-row"><button class="btn btn-secondary" data-action="owner-cancel">Cancel</button>' +
+    '<button class="btn btn-primary" data-action="owner-save">Save owner</button></div>';
+}
+function fieldsNaturalPerson(d){
+  return ofInp('Full legal name','full_legal_name', d.full_legal_name, {required:true}) +
+    ofInp('Nationality','nationality', d.nationality, {required:true}) +
+    ofInp('Other nationalities','otherNationalities', d.otherNationalities, {hint:'Optional'}) +
+    '<div class="field"><label>Gender</label><div style="display:flex;gap:20px;">' +
+      '<label style="font-weight:400;"><input type="radio" name="gender" data-of="gender" value="Male" '+(d.gender==='Male'?'checked':'')+'> Male</label>' +
+      '<label style="font-weight:400;"><input type="radio" name="gender" data-of="gender" value="Female" '+(d.gender==='Female'?'checked':'')+'> Female</label>' +
+    '</div></div>' +
+    ofInp('Month and year of birth','dob', d.dob, {type:'month', required:true}) +
+    ofInp('Email','email', d.email, {type:'email', hint:'Optional'}) +
+    ofInp('Foreign Certification Number','foreignCertNumber', d.foreignCertNumber, {hint:'Only if not a PNG citizen'}) +
+    '<p class="section-label">Residential address</p>' +
+    ofInp('Street address / allotment / village name','res_line1', d.res_line1, {required:true}) +
+    ofInp('Address line 2','res_line2', d.res_line2, {hint:'Optional'}) +
+    ofInp('City / town / village','res_city', d.res_city) +
+    ofInp('District','res_district', d.res_district) +
+    ofInpList('Province / state','res_province', d.res_province, 'provinceList') +
+    ofInp('Country','res_country', d.res_country, {required:true}) +
+    ofInp('Postcode','res_postcode', d.res_postcode, {hint:'Optional'}) +
+    '<p class="section-label">Postal address</p>' +
+    ofInp('PO Box or Private Mail Bag','pa_line1', d.pa_line1) +
+    ofInp('Post office location','pa_postOffice', d.pa_postOffice, {hint:'Optional'}) +
+    ofInp('City / town','pa_city', d.pa_city) +
+    ofInp('District','pa_district', d.pa_district) +
+    ofInpList('Province','pa_province', d.pa_province, 'provinceList') +
+    ofInp('Country','pa_country', d.pa_country) +
+    ofInp('Postcode','pa_postcode', d.pa_postcode, {hint:'Optional'});
+}
+function fieldsRegisteredEntity(d){
+  return ofInp('Entity name','entity_name', d.entity_name, {required:true}) +
+    ofInp('Registration number','registrationNumber', d.registrationNumber, {required:true}) +
+    ofInp('Entity type','entityType', d.entityType) +
+    ofInp('Email','email', d.email, {type:'email', hint:'Optional'}) +
+    '<p class="section-label">Postal address</p>' +
+    ofInp('PO Box or Private Mail Bag','pa_line1', d.pa_line1) +
+    ofInp('Post office location','pa_postOffice', d.pa_postOffice, {hint:'Optional'}) +
+    ofInp('City / town','pa_city', d.pa_city) +
+    ofInp('District','pa_district', d.pa_district) +
+    ofInpList('Province','pa_province', d.pa_province, 'provinceList') +
+    ofInp('Country','pa_country', d.pa_country) +
+    ofInp('Postcode','pa_postcode', d.pa_postcode, {hint:'Optional'});
+}
+function fieldsUnregisteredEntity(d){
+  return ofInp('Full legal name','full_legal_name', d.full_legal_name, {required:true}) +
+    ofInp('Entity type','entityType', d.entityType, {hint:'Optional'}) +
+    ofInp('Email','email', d.email, {type:'email', hint:'Optional'}) +
+    ofInp('Name of contact person','contactPerson', d.contactPerson) +
+    ofInp('Foreign Certification Number','foreignCertNumber', d.foreignCertNumber, {hint:'Only if not a PNG citizen'}) +
+    ofInp('Entity number','entityNumber', d.entityNumber, {hint:'Optional'}) +
+    '<p class="section-label">Postal address</p>' +
+    ofInp('PO Box or Private Mail Bag','pa_line1', d.pa_line1) +
+    ofInp('Post office location','pa_postOffice', d.pa_postOffice, {hint:'Optional'}) +
+    ofInp('City / town','pa_city', d.pa_city) +
+    ofInp('District','pa_district', d.pa_district) +
+    ofInpList('Province','pa_province', d.pa_province, 'provinceList') +
+    ofInp('Country','pa_country', d.pa_country) +
+    ofInp('Postcode','pa_postcode', d.pa_postcode, {hint:'Optional'});
+}
+function renderStepActivity(){
+  const cards = BUSINESS_ACTIVITIES.map(function(a){
+    return '<label class="option-card"><input type="radio" name="activity" data-field="activity" value="'+escapeHtml(a)+'" '+(draft.activity===a?'checked':'')+'> '+escapeHtml(a)+'</label>';
+  }).join('');
+  return '<p class="step-intro">What\'s the main type of business activity?</p><div class="option-list">'+cards+'</div>';
+}
+function renderStepCommencement(){
+  return '<p class="step-intro">When does the business plan to start trading?</p>' +
+    inp('Commencement date','commencementDate', draft.commencementDate, {type:'date', required:true, hint:"This can't be more than three months after the date IPA registers the business."});
+}
+function renderStepReview(){
+  const c=draft.client, n=draft.names, p=draft.principal, po=draft.postal;
+  const ownersHtml = draft.owners.map(function(o){
+    return '<div class="review-row"><span>'+escapeHtml(o.display_name)+' ('+ownerTypeLabel(o.owner_type)+')</span></div>';
+  }).join('');
+  return '<p class="step-intro">Check everything below, then submit.</p>' +
+    '<div class="review-section"><h3>Your details <button class="edit-link" data-action="goto" data-step="0">Edit</button></h3>' +
+      '<div class="review-row"><span>Name</span><span>'+escapeHtml(c.name)+'</span></div>' +
+      '<div class="review-row"><span>Phone</span><span>'+escapeHtml(c.phone||'—')+'</span></div></div>' +
+    '<div class="review-section"><h3>Business names <button class="edit-link" data-action="goto" data-step="1">Edit</button></h3>' +
+      '<div class="review-row"><span>Preferred</span><span>'+escapeHtml(n.first)+'</span></div>' +
+      '<div class="review-row"><span>Second</span><span>'+escapeHtml(n.second||'—')+'</span></div>' +
+      '<div class="review-row"><span>Third</span><span>'+escapeHtml(n.third||'—')+'</span></div></div>' +
+    '<div class="review-section"><h3>Business address <button class="edit-link" data-action="goto" data-step="2">Edit</button></h3>' +
+      '<div class="review-row"><span>Address</span><span>'+escapeHtml(formatAddress(p))+'</span></div></div>' +
+    '<div class="review-section"><h3>Postal address <button class="edit-link" data-action="goto" data-step="3">Edit</button></h3>' +
+      '<div class="review-row"><span>Address</span><span>'+escapeHtml(formatAddress(po))+'</span></div>' +
+      '<div class="review-row"><span>Contact email</span><span>'+escapeHtml(draft.contactEmail)+'</span></div></div>' +
+    '<div class="review-section"><h3>Owners ('+draft.owners.length+') <button class="edit-link" data-action="goto" data-step="4">Edit</button></h3>'+ownersHtml+'</div>' +
+    '<div class="review-section"><h3>Business activity <button class="edit-link" data-action="goto" data-step="5">Edit</button></h3>' +
+      '<div class="review-row"><span>'+escapeHtml(draft.activity)+'</span></div></div>' +
+    '<div class="review-section"><h3>Commencement date <button class="edit-link" data-action="goto" data-step="6">Edit</button></h3>' +
+      '<div class="review-row"><span>'+escapeHtml(draft.commencementDate)+'</span></div></div>' +
+    '<button class="btn btn-primary btn-block" data-action="submit" '+(submitting?'disabled':'')+'>'+(submitting?'Submitting…':'Submit application')+'</button>';
+}
+function renderConfirmation(){
+  const s = submitted;
+  const ownersHtml = s.owners.map(function(o){
+    return '<div class="review-row"><span>'+escapeHtml(o.display_name)+' ('+ownerTypeLabel(o.owner_type)+')</span></div>';
+  }).join('');
+  return '<div class="shell">' +
+    '<div id="receipt">' +
+      '<div class="brand"><div class="brand-name">Ready Digital Consultancy</div>' +
+      '<div class="brand-sub">Business name registration — Form A-17 intake</div></div>' +
+      '<div class="step-card">' +
+        '<h2 style="margin-top:0;">Submission received</h2>' +
+        '<p>Reference <strong>A17-'+s.ref+'</strong>. RDC will review this and lodge it with IPA — we\'ll be in touch about payment and next steps.</p>' +
+        '<div class="review-section"><h3>Business names</h3>' +
+          '<div class="review-row"><span>Preferred</span><span>'+escapeHtml(s.names.first)+'</span></div>' +
+          '<div class="review-row"><span>Second</span><span>'+escapeHtml(s.names.second||'—')+'</span></div>' +
+          '<div class="review-row"><span>Third</span><span>'+escapeHtml(s.names.third||'—')+'</span></div></div>' +
+        '<div class="review-section"><h3>Owners</h3>'+ownersHtml+'</div>' +
+        '<div class="review-section"><h3>Business activity</h3><div class="review-row"><span>'+escapeHtml(s.activity)+'</span></div></div>' +
+      '</div>' +
+    '</div>' +
+    '<div class="nav-row">' +
+      '<button class="btn btn-secondary" data-action="print">Save as PDF</button>' +
+      '<button class="btn btn-primary" data-action="restart">Register another business</button>' +
+    '</div></div>';
+}
+
+async function onSubmit(){
+  if(submitting) return;
+  submitting = true; renderWizard();
+  try{
+    const clientId = uid(), submissionId = uid();
+    let r = await sb.from('clients').insert({ id:clientId, name:draft.client.name, phone:draft.client.phone||null, email:draft.client.email||null });
+    if(r.error) throw r.error;
+
+    r = await sb.from('submissions').insert({
+      id: submissionId, client_id: clientId,
+      proposed_name_1: draft.names.first, proposed_name_2: draft.names.second||null, proposed_name_3: draft.names.third||null,
+      principal_address: draft.principal, postal_address: draft.postal, contact_email: draft.contactEmail,
+      business_activity: draft.activity, commencement_date: draft.commencementDate||null
+    });
+    if(r.error) throw r.error;
+
+    const ownerRows = draft.owners.map(function(o){
+      return { id:o.id, submission_id:submissionId, owner_order:o.owner_order, owner_type:o.owner_type,
+        display_name:o.display_name, email:o.email||null, postal_address:o.postal_address, details:o.details };
+    });
+    r = await sb.from('owners').insert(ownerRows);
+    if(r.error) throw r.error;
+
+    submitted = { ref: submissionId.slice(0,8).toUpperCase(), names: draft.names, owners: draft.owners, activity: draft.activity };
+    clearDraft();
+    draft = emptyDraft(); step = 0;
+  }catch(err){
+    alert('Something went wrong submitting this — check your connection and try again.\n\n' + (err && err.message ? err.message : err));
+  }finally{
+    submitting = false; renderWizard();
+  }
+}
+
+/* =========================================================
+   ADMIN DASHBOARD
+   ========================================================= */
+let session = null;
+let submissions = [];
+let filterStatus = 'all';
+let expandedId = null;
+let ownersCache = {};
+let adminError = null;
+let adminInited = false;
+
+function initAdmin(){
+  const app = document.getElementById('adminApp');
+  if(!adminInited){
+    app.addEventListener('click', onAdminClick);
+    app.addEventListener('submit', onAdminSubmit);
+    sb.auth.onAuthStateChange(function(event, sess){
+      session = sess;
+      if(session) loadSubmissions(); else renderAdmin();
+    });
+    adminInited = true;
+  }
+  sb.auth.getSession().then(function(res){
+    session = res.data.session;
+    if(session) loadSubmissions(); else renderAdmin();
+  });
+}
+function renderAdmin(){
+  const app = document.getElementById('adminApp');
+  app.innerHTML = session ? renderDashboard() : renderLogin();
+}
+function renderLogin(){
+  return '<div class="shell">' +
+    '<div class="brand"><div class="brand-name">Ready Digital Consultancy</div><div class="brand-sub">Staff login</div></div>' +
+    '<div class="step-card">' +
+      (adminError ? '<div class="field-error">'+escapeHtml(adminError)+'</div>' : '') +
+      '<form data-form="login">' +
+        '<div class="field"><label>Email</label><input type="email" name="email" required></div>' +
+        '<div class="field"><label>Password</label><input type="password" name="password" required></div>' +
+        '<button class="btn btn-primary btn-block" type="submit">Log in</button>' +
+      '</form>' +
+    '</div>' +
+    '<a class="admin-link" href="#">Back to client form</a>' +
+  '</div>';
+}
+function renderDashboard(){
+  const filtered = filterStatus==='all' ? submissions : submissions.filter(function(s){ return s.status===filterStatus; });
+  const rows = filtered.map(renderSubmissionCard).join('') || '<p class="hint">No submissions yet.</p>';
+  const statuses = [['all','All'],['new','New'],['reviewed','Reviewed'],['lodged','Lodged'],['certificate_issued','Certificate issued']];
+  const tabs = statuses.map(function(pair){
+    return '<button class="filter-tab '+(filterStatus===pair[0]?'active':'')+'" data-action="filter" data-status="'+pair[0]+'">'+pair[1]+'</button>';
+  }).join('');
+  return '<div class="shell admin-shell">' +
+    '<div class="admin-header"><div class="brand-name">RDC — Registrations</div>' +
+    '<button class="btn btn-secondary" data-action="logout">Log out</button></div>' +
+    '<div class="filter-tabs">'+tabs+'</div>' + rows +
+  '</div>';
+}
+function renderSubmissionCard(s){
+  const clientName = s.clients ? s.clients.name : '(no client)';
+  const isOpen = expandedId===s.id;
+  let detail = '';
+  if(isOpen){
+    const owners = ownersCache[s.id] || [];
+    const ownersHtml = owners.map(function(o){
+      return '<div class="review-row"><span>'+escapeHtml(o.display_name)+' ('+ownerTypeLabel(o.owner_type)+')</span></div>';
+    }).join('') || '<p class="hint">Loading owners…</p>';
+    detail = '<div class="submission-detail">' +
+      '<div class="review-row"><span>Client phone</span><span>'+escapeHtml((s.clients&&s.clients.phone)||'—')+'</span></div>' +
+      '<div class="review-row"><span>Client email</span><span>'+escapeHtml((s.clients&&s.clients.email)||'—')+'</span></div>' +
+      '<div class="review-row"><span>Contact email</span><span>'+escapeHtml(s.contact_email||'—')+'</span></div>' +
+      '<div class="review-row"><span>Business address</span><span>'+escapeHtml(formatAddress(s.principal_address))+'</span></div>' +
+      '<div class="review-row"><span>Postal address</span><span>'+escapeHtml(formatAddress(s.postal_address))+'</span></div>' +
+      '<div class="review-row"><span>Business activity</span><span>'+escapeHtml(s.business_activity||'—')+'</span></div>' +
+      '<div class="review-row"><span>Commencement date</span><span>'+escapeHtml(s.commencement_date||'—')+'</span></div>' +
+      '<p class="section-label">Owners</p>' + ownersHtml +
+      '<p class="section-label">Names</p>' +
+      '<div class="review-row"><span>Preferred</span><span>'+escapeHtml(s.proposed_name_1)+'</span></div>' +
+      '<div class="review-row"><span>Second</span><span>'+escapeHtml(s.proposed_name_2||'—')+'</span></div>' +
+      '<div class="review-row"><span>Third</span><span>'+escapeHtml(s.proposed_name_3||'—')+'</span></div>' +
+      '<p class="section-label">Manage</p>' +
+      '<form data-form="update" data-id="'+s.id+'">' +
+        '<div class="field"><label>Status</label><select name="status">' +
+          ['new','reviewed','lodged','certificate_issued'].map(function(v){
+            return '<option value="'+v+'" '+(s.status===v?'selected':'')+'>'+statusLabel(v)+'</option>';
+          }).join('') +
+        '</select></div>' +
+        '<div class="field"><label>IPA reference number</label><input type="text" name="ipa_reference_number" value="'+escapeHtml(s.ipa_reference_number||'')+'"></div>' +
+        '<div class="field"><label>Notes</label><textarea name="notes" rows="3">'+escapeHtml(s.notes||'')+'</textarea></div>' +
+        '<button class="btn btn-primary" type="submit">Save changes</button>' +
+      '</form>' +
+    '</div>';
+  }
+  return '<div class="submission-card">' +
+    '<div class="submission-top" data-action="expand" data-id="'+s.id+'">' +
+      '<div><div><strong>'+escapeHtml(s.proposed_name_1)+'</strong></div>' +
+      '<div class="meta" style="font-size:13px;color:var(--muted);">'+escapeHtml(clientName)+' · '+formatDate(s.created_at)+'</div></div>' +
+      '<span class="badge '+badgeClass(s.status)+'">'+statusLabel(s.status)+'</span>' +
+    '</div>' + detail +
+  '</div>';
+}
+function onAdminClick(e){
+  const el = e.target.closest('[data-action]');
+  if(!el) return;
+  const action = el.dataset.action;
+  if(action==='logout'){ sb.auth.signOut(); }
+  else if(action==='filter'){ filterStatus = el.dataset.status; renderAdmin(); }
+  else if(action==='expand'){
+    const id = el.dataset.id;
+    if(expandedId===id){ expandedId=null; renderAdmin(); return; }
+    expandedId = id; renderAdmin();
+    if(!ownersCache[id]) loadOwners(id).then(function(){ renderAdmin(); });
+  }
+}
+async function onAdminSubmit(e){
+  e.preventDefault();
+  const form = e.target;
+  if(form.dataset.form==='login'){
+    const email = form.querySelector('[name="email"]').value;
+    const password = form.querySelector('[name="password"]').value;
+    const res = await sb.auth.signInWithPassword({ email:email, password:password });
+    if(res.error){ adminError = res.error.message; renderAdmin(); } else { adminError = null; }
+  } else if(form.dataset.form==='update'){
+    const id = form.dataset.id;
+    const updates = {
+      status: form.querySelector('[name="status"]').value,
+      ipa_reference_number: form.querySelector('[name="ipa_reference_number"]').value || null,
+      notes: form.querySelector('[name="notes"]').value || null
+    };
+    const res = await sb.from('submissions').update(updates).eq('id', id);
+    if(res.error){ alert('Save failed: '+res.error.message); return; }
+    await loadSubmissions();
+  }
+}
+async function loadSubmissions(){
+  const res = await sb.from('submissions').select('*, clients(name, phone, email)').order('created_at', {ascending:false});
+  if(!res.error) submissions = res.data;
+  renderAdmin();
+}
+async function loadOwners(id){
+  const res = await sb.from('owners').select('*').eq('submission_id', id).order('owner_order');
+  if(!res.error) ownersCache[id] = res.data;
+  return res.data;
+}
+
+/* =========================================================
+   ROUTING
+   ========================================================= */
+function route(){
+  const isAdmin = location.hash.indexOf('#admin')===0;
+  document.getElementById('wizardApp').style.display = isAdmin ? 'none' : 'block';
+  document.getElementById('adminApp').style.display = isAdmin ? 'block' : 'none';
+  if(isAdmin) initAdmin();
+}
+window.addEventListener('hashchange', route);
+window.addEventListener('DOMContentLoaded', function(){
+  initWizard();
+  route();
+});
+if('serviceWorker' in navigator){
+  window.addEventListener('load', function(){
+    navigator.serviceWorker.register('sw.js').catch(function(){ /* offline shell just won't be cached — app still works online */ });
+  });
+}
+</script>
+</body>
+</html>
