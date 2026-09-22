@@ -168,6 +168,9 @@ function ownerTypeLabel(t){
 function statusLabel(v){
   return { new:'New', reviewed:'Reviewed', lodged:'Lodged', certificate_issued:'Certificate issued' }[v] || v;
 }
+function idTypeLabel(v){
+  return { drivers_license:"Driver's License", national_id:'National ID (NID)', other:'Personal ID + Statutory Declaration' }[v] || '—';
+}
 function badgeClass(v){
   return { new:'badge-teal', reviewed:'badge-amber', lodged:'badge-blue', certificate_issued:'badge-green' }[v] || 'badge-teal';
 }
@@ -236,7 +239,7 @@ const STEP_TITLES = [
 
 function emptyDraft(){
   return {
-    client:{ name:'', phone:'', email:'' },
+    client:{ name:'', phone:'', email:'', idType:'' },
     names:{ first:'', second:'', third:'' },
     principal:{ line1:'', line2:'', city:'', district:'', province:'', postcode:'' },
     postal:{ box:'', postOffice:'', city:'', district:'', province:'', postcode:'' },
@@ -267,6 +270,11 @@ let wizardError = null;
 let ownerEditor = null;   // null, or {index, type, data}
 let submitting = false;
 let submitted = null;
+// Selected ID files live here, NOT in `draft` — File objects can't be
+// saved to localStorage, so a page refresh mid-wizard clears these
+// (everything else in draft still resumes fine).
+let idFiles = { primary:null, statDec:null };
+const ID_BUCKET = 'applicant-ids';
 
 function initWizard(){
   const app = document.getElementById('wizardApp');
@@ -278,9 +286,19 @@ function initWizard(){
 
 function onWizardInput(e){
   const t = e.target;
+  if(t.dataset.idfile !== undefined){
+    const key = t.dataset.idfile;
+    idFiles[key] = (t.files && t.files[0]) ? t.files[0] : null;
+    renderWizard();
+    return;
+  }
   if(t.dataset.field !== undefined){
     setPath(draft, t.dataset.field, t.value);
     saveDraft();
+    if(t.dataset.field === 'client.idType'){
+      idFiles = { primary:null, statDec:null }; // don't let a file picked for one ID type silently carry over
+      renderWizard();
+    }
   } else if(t.dataset.of !== undefined){
     if(!ownerEditor) return;
     ownerEditor.data[t.dataset.of] = t.value;
@@ -339,7 +357,16 @@ function onWizardClick(e){
 }
 
 function validateStep(n){
-  if(n===0 && !draft.client.name.trim()) return 'Please enter your name.';
+  if(n===0){
+    if(!draft.client.name.trim()) return 'Please enter your name.';
+    if(!draft.client.idType) return "Please choose how you'll verify your identity.";
+    if(draft.client.idType==='other'){
+      if(!idFiles.primary) return 'Please attach a personal ID.';
+      if(!idFiles.statDec) return 'Please attach your statutory declaration.';
+    } else if(!idFiles.primary){
+      return 'Please attach a photo of your ' + (draft.client.idType==='drivers_license' ? "Driver's License" : 'National ID') + '.';
+    }
+  }
   if(n===1 && !draft.names.first.trim()) return 'Please enter at least a preferred business name.';
   if(n===2){
     if(!draft.principal.line1.trim()) return 'Street address / allotment number is required.';
@@ -459,10 +486,36 @@ function renderWizard(){
 
 function renderStepClient(){
   const c = draft.client;
+  const t = c.idType;
+  let idSection =
+    '<p class="section-label">Identity verification</p>' +
+    '<p class="hint" style="margin-top:-4px;margin-bottom:12px;">IPA requires a valid ID for the applicant.</p>' +
+    '<div class="option-list">' +
+      idTypeCard('drivers_license', "Driver's License", t) +
+      idTypeCard('national_id', 'National ID (NID)', t) +
+      idTypeCard('other', "I don't have either", t) +
+    '</div>';
+  if(t==='drivers_license' || t==='national_id'){
+    idSection += fileField('primary', 'Upload a clear photo or scan of your ' + (t==='drivers_license' ? "Driver's License" : 'National ID'));
+  } else if(t==='other'){
+    idSection += fileField('primary', 'Upload a personal ID (any photo ID you have)') +
+      fileField('statDec', 'Upload your Statutory Declaration', 'A declaration confirming your identity, sworn before a Commissioner for Oaths, lawyer, or Justice of the Peace.');
+  }
   return '<p class="step-intro">Let\'s start with how we can reach you about this application.</p>' +
     inp('Your full name','client.name', c.name, {required:true}) +
     inp('Phone number','client.phone', c.phone, {type:'tel'}) +
-    inp('Email address','client.email', c.email, {type:'email', hint:'Optional, but useful if we need to reach you by email too.'});
+    inp('Email address','client.email', c.email, {type:'email', hint:'Optional, but useful if we need to reach you by email too.'}) +
+    idSection;
+}
+function idTypeCard(value, label, current){
+  return '<label class="option-card"><input type="radio" name="idType" data-field="client.idType" value="'+value+'" '+(current===value?'checked':'')+'> '+escapeHtml(label)+'</label>';
+}
+function fileField(key, label, hint){
+  const file = idFiles[key];
+  const hintHtml = hint ? '<div class="hint">'+escapeHtml(hint)+'</div>' : '';
+  const chosen = file ? '<div class="hint">Selected: '+escapeHtml(file.name)+'</div>' : '';
+  return '<div class="field"><label>'+escapeHtml(label)+' <span class="req">*</span></label>' +
+    '<input type="file" accept="image/*,.pdf" data-idfile="'+key+'">' + hintHtml + chosen + '</div>';
 }
 function renderStepNames(){
   const n = draft.names;
@@ -597,7 +650,8 @@ function renderStepReview(){
   return '<p class="step-intro">Check everything below, then submit.</p>' +
     '<div class="review-section"><h3>Your details <button class="edit-link" data-action="goto" data-step="0">Edit</button></h3>' +
       '<div class="review-row"><span>Name</span><span>'+escapeHtml(c.name)+'</span></div>' +
-      '<div class="review-row"><span>Phone</span><span>'+escapeHtml(c.phone||'—')+'</span></div></div>' +
+      '<div class="review-row"><span>Phone</span><span>'+escapeHtml(c.phone||'—')+'</span></div>' +
+      '<div class="review-row"><span>ID verification</span><span>'+escapeHtml(idTypeLabel(c.idType))+'</span></div></div>' +
     '<div class="review-section"><h3>Business names <button class="edit-link" data-action="goto" data-step="1">Edit</button></h3>' +
       '<div class="review-row"><span>Preferred</span><span>'+escapeHtml(n.first)+'</span></div>' +
       '<div class="review-row"><span>Second</span><span>'+escapeHtml(n.second||'—')+'</span></div>' +
@@ -640,12 +694,37 @@ function renderConfirmation(){
     '</div></div>';
 }
 
+function fileExt(file){
+  if(file.name && file.name.indexOf('.')!==-1) return file.name.split('.').pop().toLowerCase();
+  if(file.type==='application/pdf') return 'pdf';
+  if(file.type==='image/png') return 'png';
+  return 'jpg';
+}
+async function uploadIdFile(path, file){
+  const r = await sb.storage.from(ID_BUCKET).upload(path, file, { contentType: file.type||'application/octet-stream', upsert:false });
+  if(r.error) throw r.error;
+  return path;
+}
 async function onSubmit(){
   if(submitting) return;
   submitting = true; renderWizard();
   try{
     const clientId = uid(), submissionId = uid();
-    let r = await sb.from('clients').insert({ id:clientId, name:draft.client.name, phone:draft.client.phone||null, email:draft.client.email||null });
+
+    let idDocumentPath = null, statDecPath = null;
+    if(idFiles.primary){
+      idDocumentPath = clientId + '/id-document.' + fileExt(idFiles.primary);
+      await uploadIdFile(idDocumentPath, idFiles.primary);
+    }
+    if(idFiles.statDec){
+      statDecPath = clientId + '/stat-dec.' + fileExt(idFiles.statDec);
+      await uploadIdFile(statDecPath, idFiles.statDec);
+    }
+
+    let r = await sb.from('clients').insert({
+      id:clientId, name:draft.client.name, phone:draft.client.phone||null, email:draft.client.email||null,
+      id_type: draft.client.idType||null, id_document_path: idDocumentPath, stat_dec_path: statDecPath
+    });
     if(r.error) throw r.error;
 
     r = await sb.from('submissions').insert({
@@ -666,6 +745,7 @@ async function onSubmit(){
     submitted = { ref: submissionId.slice(0,8).toUpperCase(), names: draft.names, owners: draft.owners, activity: draft.activity };
     clearDraft();
     draft = emptyDraft(); step = 0;
+    idFiles = { primary:null, statDec:null };
   }catch(err){
     alert('Something went wrong submitting this — check your connection and try again.\n\n' + (err && err.message ? err.message : err));
   }finally{
@@ -743,6 +823,9 @@ function renderSubmissionCard(s){
     detail = '<div class="submission-detail">' +
       '<div class="review-row"><span>Client phone</span><span>'+escapeHtml((s.clients&&s.clients.phone)||'—')+'</span></div>' +
       '<div class="review-row"><span>Client email</span><span>'+escapeHtml((s.clients&&s.clients.email)||'—')+'</span></div>' +
+      '<div class="review-row"><span>ID type</span><span>'+escapeHtml(idTypeLabel(s.clients && s.clients.id_type))+'</span></div>' +
+      ((s.clients && s.clients.id_document_path) ? '<div class="review-row"><span>ID document</span><span><button class="edit-link" data-action="view-id" data-path="'+escapeHtml(s.clients.id_document_path)+'">View</button></span></div>' : '') +
+      ((s.clients && s.clients.stat_dec_path) ? '<div class="review-row"><span>Statutory declaration</span><span><button class="edit-link" data-action="view-id" data-path="'+escapeHtml(s.clients.stat_dec_path)+'">View</button></span></div>' : '') +
       '<div class="review-row"><span>Contact email</span><span>'+escapeHtml(s.contact_email||'—')+'</span></div>' +
       '<div class="review-row"><span>Business address</span><span>'+escapeHtml(formatAddress(s.principal_address))+'</span></div>' +
       '<div class="review-row"><span>Postal address</span><span>'+escapeHtml(formatAddress(s.postal_address))+'</span></div>' +
@@ -786,6 +869,12 @@ function onAdminClick(e){
     expandedId = id; renderAdmin();
     if(!ownersCache[id]) loadOwners(id).then(function(){ renderAdmin(); });
   }
+  else if(action==='view-id'){ viewIdFile(el.dataset.path); }
+}
+async function viewIdFile(path){
+  const res = await sb.storage.from(ID_BUCKET).createSignedUrl(path, 600); // link valid 10 minutes
+  if(res.error){ alert('Could not open file: '+res.error.message); return; }
+  window.open(res.data.signedUrl, '_blank');
 }
 async function onAdminSubmit(e){
   e.preventDefault();
@@ -808,7 +897,7 @@ async function onAdminSubmit(e){
   }
 }
 async function loadSubmissions(){
-  const res = await sb.from('submissions').select('*, clients(name, phone, email)').order('created_at', {ascending:false});
+  const res = await sb.from('submissions').select('*, clients(name, phone, email, id_type, id_document_path, stat_dec_path)').order('created_at', {ascending:false});
   if(!res.error) submissions = res.data;
   renderAdmin();
 }
