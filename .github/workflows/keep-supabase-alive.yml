@@ -1,1 +1,23 @@
+name: Keep Supabase project awake
 
+on:
+  schedule:
+    # Every Monday & Thursday at 03:00 UTC — comfortably inside the
+    # free-tier inactivity window, whichever day of the month it lands on.
+    - cron: '0 3 * * 1,4'
+  workflow_dispatch: {}   # lets you trigger a ping manually from the Actions tab, e.g. to test this
+
+jobs:
+  ping:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Ping the Supabase project
+        run: |
+          status=$(curl -s -o /dev/null -w "%{http_code}" \
+            "https://xupiayjdexyzndpgvrco.supabase.co/rest/v1/clients?select=id&limit=1" \
+            -H "apikey: sb_publishable_12_pAK-a0REtI-Cg4FkB3A_TEIQA3cp")
+          echo "Supabase responded with HTTP $status"
+          if [ "$status" -ge 400 ]; then
+            echo "::error::Supabase ping failed with status $status"
+            exit 1
+          fi
