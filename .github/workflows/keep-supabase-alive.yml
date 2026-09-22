@@ -13,10 +13,15 @@ jobs:
     steps:
       - name: Ping the Supabase project
         run: |
-          status=$(curl -s -o /dev/null -w "%{http_code}" \
+          SUPABASE_KEY="sb_publishable_12_pAK-a0REtI-Cg4FkB3A_TEIQA3cp"
+          response=$(curl -s -w "\n%{http_code}" \
             "https://xupiayjdexyzndpgvrco.supabase.co/rest/v1/clients?select=id&limit=1" \
-            -H "apikey: sb_publishable_12_pAK-a0REtI-Cg4FkB3A_TEIQA3cp")
-          echo "Supabase responded with HTTP $status"
+            -H "apikey: $SUPABASE_KEY" \
+            -H "Authorization: Bearer $SUPABASE_KEY")
+          status=$(echo "$response" | tail -n1)
+          body=$(echo "$response" | sed '$d')
+          echo "HTTP $status"
+          echo "$body"
           if [ "$status" -ge 400 ]; then
             echo "::error::Supabase ping failed with status $status"
             exit 1
